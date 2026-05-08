@@ -4,10 +4,16 @@ bidi
 codequality
 commitlint
 davidanson
+failsafe
 interruptible
+javaagent
 jsonschema
 nicklin
 rbubley
+restclient
 sirosen
 smartquotes
+springframework
+surefire
 texthooks
+thirdparty
