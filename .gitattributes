@@ -1,1 +1,10 @@
-* text=auto
+# Default: normalize text files to LF in Git
+* text=auto eol=lf
+
+# Java / Spring Boot files
+*.java text eol=lf
+*.properties text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.xml text eol=lf
+*.md text eol=lf
