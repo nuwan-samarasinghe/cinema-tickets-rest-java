@@ -70,53 +70,50 @@ POST /cinema/accounts/{accountId}/ticket-purchases
 E.g. Request
 ```json
 [
-  {
-    "type": "ADULT",
-    "ticketCount": 2
-  },
-  {
-    "type": "CHILD",
-    "ticketCount": 1
-  },
-  {
-    "type": "INFANT",
-    "ticketCount": 1
-  }
+    {
+        "type": "ADULT",
+        "ticketCount": 2
+    },
+    {
+        "type": "CHILD",
+        "ticketCount": 1
+    },
+    {
+        "type": "INFANT",
+        "ticketCount": 1
+    }
 ]
 ```
 
 E.g. Response
 ```json
 {
-  "status": "SUCCESS",
-  "message": "Tickets purchased successfully",
-  "accountId": 1,
-  "totalTicketsPurchased": 6,
-  "totalSeatsReserved": 5,
-  "totalAmountPaid": 95,
-  "ticketBreakdown": [
-    {
-      "type": "ADULT",
-      "ticketCount": 2,
-      "pricePerTicket": 25,
-      "totalCost": 50,
-      "seatsReserved": 2
-    },
-    {
-      "type": "CHILD",
-      "ticketCount": 3,
-      "pricePerTicket": 15,
-      "totalCost": 45,
-      "seatsReserved": 3
-    },
-    {
-      "type": "INFANT",
-      "ticketCount": 1,
-      "pricePerTicket": 0,
-      "totalCost": 0,
-      "seatsReserved": 0
-    }
-  ]
+    "status": "SUCCESS",
+    "message": "Tickets purchased successfully",
+    "accountId": 1,
+    "totalTicketsPurchased": 4,
+    "totalSeatsReserved": 3,
+    "totalAmountPaid": 65.00,
+    "ticketBreakdown": [
+        {
+            "type": "ADULT",
+            "ticketCount": 2,
+            "totalCost": 50.00,
+            "seatsReserved": 2
+        },
+        {
+            "type": "CHILD",
+            "ticketCount": 1,
+            "totalCost": 15.00,
+            "seatsReserved": 1
+        },
+        {
+            "type": "INFANT",
+            "ticketCount": 1,
+            "totalCost": 0.00,
+            "seatsReserved": 0
+        }
+    ]
 }
 ```
 
@@ -124,11 +121,11 @@ For any error response will be following
 
 ```json
 {
-  "type": "INVALID_BOOKING_REQUEST",
-  "title": "Invalid booking request",
-  "status": 400,
-  "detail": "CHILD and INFANT tickets cannot be purchased without an ADULT ticket",
-  "timestamp": "2026-05-15T10:30:45Z"
+    "timestamp": "2026-05-16T10:45:38.544884",
+    "status": 400,
+    "title": "Adult required",
+    "detail": "CHILD and INFANT tickets cannot be purchased without an ADULT ticket",
+    "type": "ADULT_REQUIRED"
 }
 ```
 
