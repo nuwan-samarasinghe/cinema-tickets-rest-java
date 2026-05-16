@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import uk.gov.dwp.engineering.recruitment.TicketPurchaseProperties;
 import uk.gov.dwp.engineering.recruitment.domain.TicketRequest;
 import uk.gov.dwp.engineering.recruitment.domain.TicketType;
 import uk.gov.dwp.engineering.recruitment.exception.InvalidBookingException;
@@ -18,7 +19,9 @@ class TicketPurchaseValidatorTest {
 
     @BeforeEach
     void setUp() {
-        validator = new TicketPurchaseValidator(25);
+        TicketPurchaseProperties ticketPurchaseProperties = new TicketPurchaseProperties();
+        ticketPurchaseProperties.setMaxTicketsPerBooking(25);
+        validator = new TicketPurchaseValidator(ticketPurchaseProperties);
     }
 
     // ----------------- Valid cases -----------------
@@ -93,6 +96,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.INVALID_ACCOUNT_ID, exception.getErrorCode());
+        assertEquals("Invalid account ID", exception.getErrorCode().getTitle());
+        assertEquals("Account ID must be greater than zero", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -107,6 +112,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.INVALID_ACCOUNT_ID, exception.getErrorCode());
+        assertEquals("Invalid account ID", exception.getErrorCode().getTitle());
+        assertEquals("Account ID must be greater than zero", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -121,6 +128,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.INVALID_ACCOUNT_ID, exception.getErrorCode());
+        assertEquals("Invalid account ID", exception.getErrorCode().getTitle());
+        assertEquals("Account ID must be greater than zero", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -133,6 +142,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.NO_TICKETS_REQUESTED, exception.getErrorCode());
+        assertEquals("No tickets requested", exception.getErrorCode().getTitle());
+        assertEquals("At least one ticket must be requested", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -145,6 +156,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.NO_TICKETS_REQUESTED, exception.getErrorCode());
+        assertEquals("No tickets requested", exception.getErrorCode().getTitle());
+        assertEquals("At least one ticket must be requested", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -160,6 +173,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.INVALID_TICKET_REQUEST, exception.getErrorCode());
+        assertEquals("Invalid ticket request", exception.getErrorCode().getTitle());
+        assertEquals("Ticket request must not be null", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -174,6 +189,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.INVALID_TICKET_TYPE, exception.getErrorCode());
+        assertEquals("Invalid ticket type", exception.getErrorCode().getTitle());
+        assertEquals("Ticket type must be provided", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -188,6 +205,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.INVALID_TICKET_COUNT, exception.getErrorCode());
+        assertEquals("Invalid ticket count", exception.getErrorCode().getTitle());
+        assertEquals("Ticket quantity must be greater than zero", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -202,6 +221,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.INVALID_TICKET_COUNT, exception.getErrorCode());
+        assertEquals("Invalid ticket count", exception.getErrorCode().getTitle());
+        assertEquals("Ticket quantity must be greater than zero", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -218,6 +239,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.INVALID_TICKET_COUNT, exception.getErrorCode());
+        assertEquals("Invalid ticket count", exception.getErrorCode().getTitle());
+        assertEquals("Ticket quantity must be greater than zero", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -232,6 +255,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.MAX_TICKET_LIMIT_EXCEEDED, exception.getErrorCode());
+        assertEquals("Maximum ticket limit exceeded", exception.getErrorCode().getTitle());
+        assertEquals("A maximum of %d tickets can be purchased at one time", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -248,6 +273,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.MAX_TICKET_LIMIT_EXCEEDED, exception.getErrorCode());
+        assertEquals("Maximum ticket limit exceeded", exception.getErrorCode().getTitle());
+        assertEquals("A maximum of %d tickets can be purchased at one time", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -262,6 +289,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.ADULT_REQUIRED, exception.getErrorCode());
+        assertEquals("Adult required", exception.getErrorCode().getTitle());
+        assertEquals("CHILD and INFANT tickets cannot be purchased without an ADULT ticket", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -276,6 +305,8 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.ADULT_REQUIRED, exception.getErrorCode());
+        assertEquals("Adult required", exception.getErrorCode().getTitle());
+        assertEquals("CHILD and INFANT tickets cannot be purchased without an ADULT ticket", exception.getErrorCode().getDetail());
     }
 
     @Test
@@ -291,5 +322,7 @@ class TicketPurchaseValidatorTest {
                 () -> validator.validate(accountId, ticketRequests)
         );
         assertEquals(BookingErrorCode.ADULT_REQUIRED, exception.getErrorCode());
+        assertEquals("Adult required", exception.getErrorCode().getTitle());
+        assertEquals("CHILD and INFANT tickets cannot be purchased without an ADULT ticket", exception.getErrorCode().getDetail());
     }
 }

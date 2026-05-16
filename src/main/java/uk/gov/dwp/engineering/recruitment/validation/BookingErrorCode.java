@@ -31,7 +31,7 @@ public enum BookingErrorCode {
     ),
     MAX_TICKET_LIMIT_EXCEEDED(
             "Maximum ticket limit exceeded",
-            "A maximum of 25 tickets can be purchased at one time"
+            "A maximum of %d tickets can be purchased at one time"
     ),
     ADULT_REQUIRED(
             "Adult required",

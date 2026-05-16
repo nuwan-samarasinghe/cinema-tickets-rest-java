@@ -2,10 +2,10 @@ package uk.gov.dwp.engineering.recruitment.validation;
 
 import java.util.Arrays;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.dwp.engineering.recruitment.TicketPurchaseProperties;
 import uk.gov.dwp.engineering.recruitment.domain.TicketRequest;
 import uk.gov.dwp.engineering.recruitment.domain.TicketType;
 import uk.gov.dwp.engineering.recruitment.exception.InvalidBookingException;
@@ -17,12 +17,12 @@ import uk.gov.dwp.engineering.recruitment.exception.InvalidBookingException;
 @Component
 public class TicketPurchaseValidator {
 
-    private final int maxTicketsPerBooking;
+    private final TicketPurchaseProperties ticketPurchaseProperties;
 
     public TicketPurchaseValidator(
-            @Value("${cinema-tickets.max-tickets-per-booking:25}") int maxTicketsPerBooking
+            TicketPurchaseProperties ticketPurchaseProperties
     ) {
-        this.maxTicketsPerBooking = maxTicketsPerBooking;
+        this.ticketPurchaseProperties = ticketPurchaseProperties;
     }
 
     /**
@@ -97,7 +97,7 @@ public class TicketPurchaseValidator {
         int totalTickets = Arrays.stream(ticketRequests)
                 .mapToInt(TicketRequest::ticketCount)
                 .sum();
-        if (totalTickets > maxTicketsPerBooking) {
+        if (totalTickets > ticketPurchaseProperties.getMaxTicketsPerBooking()) {
             log.error("Too many tickets requested: {}", totalTickets);
             throw new InvalidBookingException(BookingErrorCode.MAX_TICKET_LIMIT_EXCEEDED);
         }

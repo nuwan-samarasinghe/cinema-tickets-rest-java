@@ -8,16 +8,21 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.dwp.engineering.recruitment.dto.ErrorResponse;
 import uk.gov.dwp.engineering.recruitment.exception.CinemaTicketServiceException;
 import uk.gov.dwp.engineering.recruitment.exception.InvalidBookingException;
 import uk.gov.dwp.engineering.recruitment.exception.PaymentServiceException;
 import uk.gov.dwp.engineering.recruitment.exception.SeatReservationServiceException;
+import uk.gov.dwp.engineering.recruitment.validation.BookingErrorCode;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final TicketPurchaseProperties ticketPurchaseProperties;
 
     @ExceptionHandler(InvalidBookingException.class)
     public ResponseEntity<ErrorResponse> handleInvalidBookingException(
@@ -27,7 +32,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .title(exception.getErrorCode().getTitle())
-                .detail(exception.getErrorCode().getDetail())
+                .detail(resolveDetail(exception.getErrorCode()))
                 .type(exception.getErrorCode().name())
                 .build();
 
@@ -117,6 +122,14 @@ public class GlobalExceptionHandler {
         log.error("Internal Server Error", exception);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
+    private String resolveDetail(final BookingErrorCode errorCode) {
+        if (errorCode == BookingErrorCode.MAX_TICKET_LIMIT_EXCEEDED) {
+            return errorCode.getDetail().formatted(ticketPurchaseProperties.getMaxTicketsPerBooking());
+        }
+
+        return errorCode.getDetail();
     }
 
 }
