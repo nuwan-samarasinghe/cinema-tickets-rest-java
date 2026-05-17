@@ -1,14 +1,7 @@
 package uk.gov.dwp.engineering.recruitment;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -18,11 +11,14 @@ import tools.jackson.databind.ObjectMapper;
 import uk.gov.dwp.engineering.recruitment.domain.TicketRequest;
 import uk.gov.dwp.engineering.recruitment.domain.TicketType;
 import uk.gov.dwp.engineering.recruitment.dto.PurchaseResponse;
-import uk.gov.dwp.engineering.recruitment.dto.TicketBreakdownResponse;
 import uk.gov.dwp.engineering.recruitment.exception.CinemaTicketServiceException;
 import uk.gov.dwp.engineering.recruitment.exception.InvalidBookingException;
-import uk.gov.dwp.engineering.recruitment.exception.PaymentServiceException;
-import uk.gov.dwp.engineering.recruitment.exception.SeatReservationServiceException;
+import uk.gov.dwp.engineering.recruitment.purchase.PaymentDebitStep;
+import uk.gov.dwp.engineering.recruitment.purchase.RequestValidateStep;
+import uk.gov.dwp.engineering.recruitment.purchase.SeatReservationStep;
+import uk.gov.dwp.engineering.recruitment.purchase.TicketCostCalculationStep;
+import uk.gov.dwp.engineering.recruitment.purchase.TicketPurchaseContext;
+import uk.gov.dwp.engineering.recruitment.purchase.TicketPurchaseOrchestrator;
 import uk.gov.dwp.engineering.recruitment.thirdparty.PaymentService;
 import uk.gov.dwp.engineering.recruitment.thirdparty.SeatReservationService;
 import uk.gov.dwp.engineering.recruitment.validation.TicketPurchaseValidator;
@@ -72,7 +68,6 @@ public class CinemaTicketsServiceImpl implements CinemaTicketsService {
     @Override
     public String purchaseTickets(final Long accountId, final TicketRequest... ticketRequests)
             throws InvalidBookingException {
-        validator.validate(accountId, ticketRequests);
         return jsonToString(processTickets(accountId, ticketRequests));
     }
 
@@ -101,97 +96,43 @@ public class CinemaTicketsServiceImpl implements CinemaTicketsService {
      */
     private PurchaseResponse processTickets(final Long accountId, final TicketRequest... ticketRequests) {
         log.info("Processing ticket purchase for account: {}", accountId);
-        Map<TicketType, Integer> ticketTypeCounts = Arrays.stream(ticketRequests)
-                .collect(Collectors.groupingBy(
-                        TicketRequest::type,
-                        () -> new EnumMap<>(TicketType.class),
-                        Collectors.summingInt(TicketRequest::ticketCount)
-                ));
+        TicketPurchaseContext ctx = TicketPurchaseContext.builder()
+                .accountId(accountId)
+                .ticketRequests(ticketRequests)
+                .build();
 
-        List<TicketBreakdownResponse> ticketBreakdown = Arrays.stream(TicketType.values())
-                .map(ticketType -> buildTicketBreakdown(ticketType, ticketTypeCounts))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toList();
-
-        int totalTicketsPurchased = ticketBreakdown.stream()
-                .mapToInt(TicketBreakdownResponse::getTicketCount)
-                .sum();
-
-        long totalSeatsReserved = ticketBreakdown.stream()
-                .mapToLong(TicketBreakdownResponse::getSeatsReserved)
-                .sum();
-
-        BigDecimal totalAmountPaid = ticketBreakdown.stream()
-                .map(TicketBreakdownResponse::getTotalCost)
-                .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2);
-
-        log.info("Total tickets purchased: {}, Total seats reserved: {}, Total amount paid: {}",
-                totalTicketsPurchased, totalSeatsReserved, totalAmountPaid);
-
-        // Process payment and reserve seats
-        ResponseEntity<String> paymentResponse = paymentService.debitAccount(accountId, totalAmountPaid);
-        if (!paymentResponse.getStatusCode().is2xxSuccessful()) {
-            log.error("Payment failed for account: {}, amount: {}", accountId, totalAmountPaid);
-            throw new PaymentServiceException("Payment failed");
-        }
-        // Only reserve seats if payment is successful
-        ResponseEntity<String> seatResponse = seatReservationService.reserveSeats(accountId, totalSeatsReserved);
-        if (!seatResponse.getStatusCode().is2xxSuccessful()) {
-            log.error("Seat reservation failed for account: {}, seats: {}", accountId, totalSeatsReserved);
-            throw new SeatReservationServiceException("Seat reservation failed");
-        }
+        /**
+         * *
+         * Why Saga-pattern used over here ?
+         *
+         *
+         * The Saga pattern is used in this context to manage the complex
+         * workflow of purchasing cinema tickets, which involves multiple steps
+         * such as
+         *
+         * 01. validating the request 02. calculating the total cost and no of
+         * seats to reserve, 03. processing the payment 04. reserving seats.
+         *
+         * Each of these steps can potentially fail, and the Saga pattern allows
+         * for a structured way to handle these. in here we are not looking at
+         * compansation or other steps like sending eamails but now we can add
+         * those steps easily into the system with minimal efffort.
+         */
+        new TicketPurchaseOrchestrator()
+                .addStep(new RequestValidateStep(validator)) // validation step
+                .addStep(new TicketCostCalculationStep(ticketPrices)) // cost calculation step
+                .addStep(new PaymentDebitStep(paymentService)) // payment processing step
+                .addStep(new SeatReservationStep(seatReservationService)) // seat reservation step
+                .execute(ctx);
 
         return PurchaseResponse.builder()
                 .status("SUCCESS")
                 .message("Tickets purchased successfully")
-                .accountId(accountId)
-                .totalTicketsPurchased(totalTicketsPurchased)
-                .totalSeatsReserved(totalSeatsReserved)
-                .totalAmountPaid(totalAmountPaid)
-                .ticketBreakdown(ticketBreakdown)
+                .accountId(ctx.getAccountId())
+                .totalTicketsPurchased(ctx.getTotalTicketsPurchased())
+                .totalSeatsReserved(ctx.getTotalSeatsReserved())
+                .totalAmountPaid(ctx.getTotalAmountPaid())
+                .ticketBreakdown(ctx.getTicketBreakdown())
                 .build();
-    }
-
-    /**
-     * Builds a breakdown of the ticket purchase for a specific ticket type.
-     *
-     * @param ticketType ticket type.
-     * @param ticketTypeCounts for a give ticket type no of tickets.
-     * @return an Optional containing the TicketBreakdownResponse if the ticket
-     * type was purchased.
-     */
-    private Optional<TicketBreakdownResponse> buildTicketBreakdown(
-            TicketType ticketType,
-            Map<TicketType, Integer> ticketTypeCounts
-    ) {
-        int ticketCount = ticketTypeCounts.getOrDefault(ticketType, 0);
-        if (ticketCount == 0) {
-            return Optional.empty();
-        }
-        BigDecimal pricePerTicket = ticketPrices.get(ticketType);
-        BigDecimal totalCost = new BigDecimal(ticketCount).multiply(pricePerTicket).setScale(2);
-        long seatsReserved = calculateSeatsReserved(ticketType, ticketCount);
-        log.info("Ticket breakdown for {}: {} tickets, total cost: {}", ticketType, ticketCount, totalCost);
-        return Optional.of(
-                TicketBreakdownResponse.builder()
-                        .type(ticketType)
-                        .ticketCount(ticketCount)
-                        .totalCost(totalCost)
-                        .seatsReserved(seatsReserved)
-                        .build()
-        );
-    }
-
-    /**
-     * Calculates the number of seats to reserve based on the ticket type and
-     * count. Infants do not require a seat, while adults and children do.
-     *
-     * @param ticketType the type of ticket
-     * @param ticketCount the number of tickets of that type
-     * @return the number of seats to reserve
-     */
-    private int calculateSeatsReserved(TicketType ticketType, int ticketCount) {
-        return ticketType == TicketType.INFANT ? 0 : ticketCount;
     }
 }

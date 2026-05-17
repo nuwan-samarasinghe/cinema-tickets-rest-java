@@ -1,4 +1,4 @@
-package uk.gov.dwp.engineering.recruitment;
+package uk.gov.dwp.engineering.recruitment.core;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

@@ -5,7 +5,7 @@ import java.util.Arrays;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.dwp.engineering.recruitment.TicketPurchaseProperties;
+import uk.gov.dwp.engineering.recruitment.core.TicketPurchaseProperties;
 import uk.gov.dwp.engineering.recruitment.domain.TicketRequest;
 import uk.gov.dwp.engineering.recruitment.domain.TicketType;
 import uk.gov.dwp.engineering.recruitment.exception.InvalidBookingException;

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.dwp.engineering.recruitment.core.TicketPurchaseProperties;
 import uk.gov.dwp.engineering.recruitment.dto.ErrorResponse;
 import uk.gov.dwp.engineering.recruitment.exception.CinemaTicketServiceException;
 import uk.gov.dwp.engineering.recruitment.exception.InvalidBookingException;
